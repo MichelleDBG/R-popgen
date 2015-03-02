@@ -1,0 +1,508 @@
+#	October 13, 2014
+
+library(ggplot2)
+library(plyr)
+
+
+# Change the working directory to the folder with csv files for PhFo
+setwd(path.expand("P:/My Documents/Edits for others/2014/Phacelia formosula_2014"))
+phfoNei <- read.csv("Nei_phfo_2014_dec17.csv", head = F)
+
+
+# read in the tables
+phfo <- read.csv("Copy of Phacelia formosula data 2014.csv", 
+		head = T, 
+		as.is = T)
+head(phfo)
+summary(phfo)
+
+names(phfo)
+
+hist(phfo$Leaf.length)	#normal
+hist(phfo$Leaf.width)	#normal to slightly right skewed
+hist(phfo$Plant.Height)	#slightly right skewed
+hist(phfo$Width)		#slightly right skewed
+hist(phfo$Cyme.length)	#normal
+hist(phfo$Flw.length)	#normal
+hist(phfo$Sepal.length)	#normal
+hist(phfo$Cap..length)	#normal
+hist(phfo$Cap..width)	#normal
+
+pairs(phfo[,8:16])
+cor(phfo[,8:16], use = 'na.or.complete')
+# > 0.5
+# Plant Height to Width and Leaf.length
+# Leaf.width to Leaf.length
+# Cyme.length to ___
+# Flw.length to Sepal.length
+# Cap..length to __
+# Cap..width to ____
+
+# removing Width, Leaf.length, and Sepal.length
+
+
+ggplot(phfo, aes(x = Species))+
+	geom_boxplot(aes(y = Plant.Height))
+
+ggplot(phfo, aes(x = Species))+
+	geom_boxplot(aes(y = Leaf.width))
+
+ggplot(phfo, aes(x = Species))+
+	geom_boxplot(aes(y = Cyme.length))
+
+ggplot(phfo, aes(x = Species))+
+	geom_boxplot(aes(y = Flw.length))
+
+ggplot(phfo, aes(x = Species))+
+	geom_boxplot(aes(y = Cap..length))
+
+ggplot(phfo, aes(x = Species))+
+	geom_boxplot(aes(y = Cap..width))
+
+
+
+########################################
+################# PCoA #################
+########################################
+names(phfo)
+names(phfo[,c(8,11:13,15:16)])
+pairs(phfo[,c(8,11:13,15:16)])	
+
+phfo.pca <- princomp(formula = ~., 
+	data = phfo[,c(8,11:13,15:16)], cor = T, na.action = na.exclude)
+summary(phfo.pca)
+
+###
+Importance of components:
+                          Comp.1    Comp.2    Comp.3    Comp.4     Comp.5     Comp.6
+Standard deviation     1.3961008 1.1736774 0.9812709 0.8584239 0.74166178 0.65079748
+Proportion of Variance 0.3248496 0.2295865 0.1604821 0.1228153 0.09167703 0.07058956
+Cumulative Proportion  0.3248496 0.5544360 0.7149181 0.8377334 0.92941044 1.00000000
+###
+
+phfo.load <- loadings(phfo.pca)
+
+#_________________________________
+Loadings:
+             Comp.1 Comp.2 Comp.3 Comp.4 Comp.5 Comp.6
+Plant.Height  0.578  0.113        -0.385  0.194  0.678
+Leaf.width    0.542 -0.193  0.117  0.163 -0.783 -0.127
+Cyme.length   0.549 -0.156  0.166  0.334  0.584 -0.440
+Flw.length    0.208  0.119 -0.946  0.215              
+Cap..length         -0.653 -0.239 -0.664        -0.271
+Cap..width   -0.165 -0.697         0.476         0.505
+
+               Comp.1 Comp.2 Comp.3 Comp.4 Comp.5 Comp.6
+SS loadings     1.000  1.000  1.000  1.000  1.000  1.000
+Proportion Var  0.167  0.167  0.167  0.167  0.167  0.167
+Cumulative Var  0.167  0.333  0.500  0.667  0.833  1.000
+#_________________________________
+
+
+phfo.pc <- predict(phfo.pca)
+
+library(MASS)
+library(lattice)
+library(latticeExtra)
+library(ggplot2)
+library(devtools)
+library(digest)
+#source_url("http://cran.r-project.org/bin/windows/Rtools/") #and then run find_rtools()
+source_url("https://raw.github.com/JoFrhwld/FAAV/master/r/stat-ellipse.R")
+
+par(mfrow = c(1,1))
+###################
+
+str(phfo.pc)
+str(data.frame(phfo.pc))
+phfopc <- data.frame(phfo.pc, phfo[,1:16])
+head(phfopc)
+
+ggplot(phfopc[complete.cases(phfopc),], aes(Comp.1, Comp.2, colour = Species)) +
+	xlab("PC1 (32%)") +
+	ylab("PC2 (23%)") +
+	geom_point() +
+	stat_ellipse() 
+
+
+
+
+
+### Remove a few more correlated variables
+# > 40
+
+pairs(phfo[,8:16])
+cor(phfo[,8:16], use = 'na.or.complete')
+
+# Plant Height to Width and Leaf.length, Leaf.width, Cyme.length, Sepal.length
+# Flw.length to Sepal.length
+# Cap..length to __
+# Cap..width to ____
+
+# removing Width, Leaf.length, Leaf.width, Cyme.length, and Sepal.length
+
+names(phfo[,c(8,13,15:16)])
+pairs(phfo[,c(8,13,15:16)])	
+
+phfo.pca <- princomp(formula = ~., 
+	data = phfo[,c(8,13,15:16)], cor = T, na.action = na.exclude)
+summary(phfo.pca)
+
+##Importance of components:
+                          Comp.1    Comp.2    Comp.3    Comp.4
+Standard deviation     1.2064969 1.0470036 0.9424388 0.7483033
+Proportion of Variance 0.3639087 0.2740541 0.2220477 0.1399894
+Cumulative Proportion  0.3639087 0.6379629 0.8600106 1.0000000
+##
+
+phfo.load <- loadings(phfo.pca)	
+
+######
+Loadings:
+             Comp.1 Comp.2 Comp.3 Comp.4
+Plant.Height -0.475  0.495 -0.570  0.452
+Flw.length   -0.277  0.576  0.768       
+Cap..length   0.470  0.637 -0.274 -0.546
+Cap..width    0.690  0.138  0.103  0.703
+
+               Comp.1 Comp.2 Comp.3 Comp.4
+SS loadings      1.00   1.00   1.00   1.00
+Proportion Var   0.25   0.25   0.25   0.25
+Cumulative Var   0.25   0.50   0.75   1.00
+######
+
+
+phfo.pc <- predict(phfo.pca)
+
+phfopc <- data.frame(phfo.pc, phfo[,1:16])
+head(phfopc)
+
+ggplot(phfopc[complete.cases(phfopc),], aes(Comp.1, Comp.2, colour = Species)) +
+	xlab("PC1 (36%)") +
+	ylab("PC2 (27%)") +
+	geom_point() +
+	stat_ellipse() 
+
+
+
+###############################################################
+
+ggplot(phfoNei, aes(V2, V3, label = V1, colour = ))+
+	theme_bw() +
+	geom_text()
+
+
+###############################################################
+
+library(prabclus)
+library(vegan)
+library(plyr)
+
+setwd(path.expand("Q:/Research/Stats & Software/R CODE/Functions"))
+source("prabinit_medl.r")
+
+setwd(path.expand("P:/My Documents/Edits for others/2014/Phacelia formosula_2014"))
+phforaw <- read.csv("Phfo_GENALEX data 12 loci_11-24-14.csv", head = T)
+names(phforaw)
+head(phforaw)
+
+
+# reformat for Jenny December 18, 2014
+
+
+reformat <- c()
+for(i in 1:nrow(phforaw)){
+	genotype1 <- phforaw[i, c(1:2, seq(3,26,by = 2))]
+	names(genotype1) <- c("Site","Indiv",1:12)
+	genotype2 <- phforaw[i, c(1:2, seq(4,26,by = 2))]
+	names(genotype2) <- c("Site","Indiv",1:12)
+	reformat <- rbind(reformat, genotype1, genotype2)
+}
+
+write.table(reformat,"clipboard",sep="\t")
+############################################
+
+# throw out individuals with missing data
+phfoai.2 <- prabinit(prabmatrix = phforaw[complete.cases(phforaw[,3:26]),3:26],
+	distance = "jaccard", rows.are.species = TRUE, nbbetweenregions = FALSE)
+
+ggplot(data.frame(Dims = 1:12,Stress = stressvals(phfoai.2, mdsdim = 1:12, trace = TRUE)$MDSstress),
+		aes(Dims, Stress)) +
+	geom_point() +
+	geom_hline(yintercept = 5) +
+	theme_bw()
+
+## vegdist (as all) have issues with missing data
+phfoai <- prabinitmedl(prabmatrix = phforaw[,3:26], distance = "veg", 
+		rows.are.species = TRUE, nbbetweenregions = FALSE)		
+	# with 'jaccard' dist 2B/(1+B) where B is Bray-Curtis dissimilarity
+
+nrow(phforaw)
+
+print(phfoai)
+str(phfoai$distmat)
+
+matplot(stressvals(phfoai, mdsdim = 1:12, trace = TRUE)$MDSstress, 
+	type = "p",
+	pch = 20,
+	ylab = "stress",
+	xlab = "k")	
+
+prabtest(phfoai)
+prabclust(phfoai, mdsmethod = "classical", mdsdim = 10, nnk =
+	ceiling(phfoai$n.regions/40), nclus = 0:10, modelid = "all", permutations=0) 
+### flawed with missing data
+
+
+
+# use adegenet to determine the number of clusters
+library("ape")
+library("genetics")
+library("pegas")
+library("seqinr")
+library("ggplot2")
+library("adegenet")
+
+
+# a genind object has (1) genotypes are in rows (2) markers in columns
+# missing = NA
+X <- as.matrix(apply(phforaw[,3:length(phforaw)], 1, paste, collapse=" "))
+genind.obj <- df2genind(X, sep = " ", ind.names = phforaw[,1], type = "codom",
+	pop = phforaw[,2])
+
+
+phfo.pegas <- read.loci("Phfo_pegas.csv",
+	loci.sep=",", col.pop=1) 
+
+phfo.pegas
+
+
+
+
+find.clusters(genind.obj, max.n.clust = 4)
+find.clusters(genind.obj, max.n.clust = 8)
+find.clusters(genind.obj, max.n.clust = 9)
+
+clust.3 <- find.clusters(genind.obj, n.clust = 3, n.pca = 2)
+clust.2 <- find.clusters(genind.obj, n.clust = 2, n.pca = 2)
+
+clust.3 <- find.clusters(genind.obj, max.n.clust = 9, n.clust =3, n.pca = 2)
+
+names(clust.3)
+
+
+phfopop <- genind2genpop(genind.obj)
+
+
+
+table(pop(genind.obj), clust.3$grp)
+
+dapc.1 <- dapc(genind.obj, clust.3$grp)
+scatter(dapc.1, scree.da=0)
+compoplot(dapc.1, posi="bottomright", lab="")
+
+ col <- rainbow(length(levels(pop(genind.obj))))
+ col.points <- transp(col[as.integer(pop(genind.obj))],.2)
+ scatter(dapc.1, col=col, bg="white", scree.da=0, pch="", cstar=0, clab=0, xlim=c(-10,10), legend=TRUE)
+ par(xpd=TRUE)
+ points(dapc.1$ind.coord[,1], dapc.1$ind.coord[,2], pch=20, col=col.points, cex=5)
+ text(dapc.1$ind.coord[,1], dapc.1$ind.coord[,2], labels = row.names(dapc.1$ind.coord),
+	cex = 0.5, offset = 1)
+
+dudi.phfo <- dudi.pca(genind.obj$tab[complete.cases(genind.obj$tab),])
+s.class(dudi.phfo$li, genind.obj@pop, cpoint=1)
+s.class(dudi.phfo$li, genind.obj@pop, cpoint = 1)
+s.arrow(dudi.phfo$c1, lab = names(genind.obj@tab))
+deug.dudi1 <- dudi.pca(deug$tab, center = TRUE, 
+    scale = TRUE, scan = FALSE)
+s.class(deug.dudi1$li, deug$result, cpoint = 1)
+s.corcircle(deug.dudi1$co, lab = names(deug$tab), 
+    full = FALSE, box = TRUE)
+par(mfrow = c(1,1))
+
+
+rowskeep <- as.numeric(row.names(genind.obj$tab[complete.cases(genind.obj$tab),]))
+clust.3$grp
+xvalDapc(genind.obj$tab[complete.cases(genind.obj$tab),], clust.3$grp[rowskeep])
+
+
+genind.obj.pop <- df2genind(X, sep = ",", ind.names = Phfo_pegas[,1], type = "codom")
+
+#######################################
+
+library(poppr)
+
+as.DNAbin(genind.obj@tab)
+
+
+phforaw$Species <- "formosula"
+phforaw$Species[phforaw$Site %in% c("HN","HS","F")] <- "scullyi"
+phforaw$Species[phforaw$Site == "T"] <- "gina-gleneae"
+
+population_hierarchy <- data.frame(Site = phforaw[,2],Species = phforaw$Species)
+genind.obj$other <- list(population_hierarchy = population_hierarchy)
+
+diss.dist(genind.obj
+
+poppr.amova(genind.obj, ~ Species/Site)	#, dist = "jaccard", within = FALSE)
+
+poppr.amova(genind.obj, ~ Site)
+
+genclone.obj <- as.genclone(genind.obj)
+
+pop(genind.obj)
+
+ggplot(private_alleles(genind.obj, report = "data.frame")) +
+	geom_tile(aes(x = population, y = allele, fill = count))
+
+
+genotype_curve(genind.obj)
+
+info_table(genind.obj)
+
+
+
+#############################
+stress <- stressvals(phfoai.2, mdsdim = 1:12, trace = TRUE)$MDSstress
+
+ggplot(data.frame(Dims = 1:12,Stress = stress),
+		aes(Dims, Stress)) +
+	geom_point() +
+	geom_hline(yintercept = 5, linetype = 2) +
+	theme_bw() +
+	scale_x_continuous(breaks = seq(1,12,1))
+
+prabtest(phfoai.2)
+# 10 clusters
+cluster.phfo <- prabclust(phfoai.2, mdsmethod = "classical", mdsdim = 5, nnk = 
+	ceiling(phfoai.2$n.regions/40), nclus = 0:10, modelid = "all", permutations=0) 
+
+print(cluster.phfo)
+
+nrow(cluster.phfo$points)
+length(cluster.phfo$clustering)
+head(phforaw[complete.cases(phforaw[,3:26]),1:2])
+
+clustered <- data.frame(Name = phforaw[complete.cases(phforaw[,3:26]),1],
+	Group = cluster.phfo$clustering, cluster.phfo$points)
+
+ggplot(clustered, aes(X1, X2, colour = as.factor(Group), label = Name)) +
+	geom_text(aes(size = 1)) +
+	stat_ellipse()
+	
+
+## 3 clusters to see if three species fall out
+cluster.phfo <- prabclust(phfoai.2, mdsmethod = "classical", mdsdim = 5, nnk = 
+	ceiling(phfoai.2$n.regions/40), nclus = 0:3, modelid = "all", permutations=0) 
+
+print(cluster.phfo)
+
+clustered <- data.frame(Name = phforaw[complete.cases(phforaw[,3:26]),2],
+	Group = cluster.phfo$clustering, cluster.phfo$points)
+
+clustered$Site <- substr(clustered$Name, 1,2)
+unique(clustered$Site)
+
+head(clustered)
+
+
+phfo$Population.Code[phfo$Species == "scullyi"]		# FC
+phfo$Population.Code[phfo$Species == "formosula"]	# BR, RN, AS
+phfo$Population.Code[phfo$Species == "gina-gleneae"]	# TC	
+unique(clustered$Name)
+clustered$Name <- revalue(clustered$Name, c("F" = "FC", "B" = "BR", "T" = "TC"))
+levels(clustered$Name)
+
+ggplot(clustered, aes(X1, X2, colour = as.factor(Group), label = Name)) +
+	geom_text(size = 2, angle = 45) +
+	stat_ellipse() 
+
+
+clustered$Species <- "formosula"
+clustered$Species[clustered$Name %in% c("HN","HS","FC")] <- "scullyi"
+clustered$Species[clustered$Name ==  "TC"] <- "gina-gleneae"
+
+ggplot(clustered, aes(X1, X2, colour = Species, label = Group)) +
+	geom_text(size = 1.5, angle = 45) +
+	stat_ellipse() 
+
+ggplot(clustered, aes(X1, X2, colour = as.factor(Group), label = Species, shape = Species)) +
+	geom_point() +
+#	geom_text(size = 2.5, angle = 45) +
+	stat_ellipse() 
+
+ggplot(clustered, aes(X1, X2, shape = as.factor(Group), label = Species, colour = Species)) +
+	geom_point() +
+#	geom_text(size = 2.5, angle = 45) +
+	stat_ellipse() 
+
+write.csv(clustered, "phfo_clustering.csv")
+
+
+head(phfo)
+phfo$Individual.ID
+head(clustered)
+names(phfo)
+
+clustered <- data.frame(clustered, Individual.ID = gsub("-","",clustered$Name))
+names(clustered)
+# gsub("-","",clustered$Name)
+
+phfo.merge <- merge(clustered, phfo, by = "Individual.ID")
+head(phfo.merge)
+phfo.merge$Site <- substr(phfo.merge$Name, 1,2)
+
+
+
+unique(phfo.merge(
+
+phfo.merge$Species <- "formosula"
+phfo.merge$Species[phfo.merge$Site == "HN <- "
+
+
+
+
+##############
+library(pegas)
+
+
+
+
+
+
+############## attempt to plot the map
+
+min.lat <- min(phfo.merge$lat)
+min.long <- min(phfo.merge$long)
+max.lat <- max(phfo.merge$lat)
+max.long <- max(phfo.merge$long)
+
+ggplot(phfo.merge, aes(lat, long, colour = as.factor(Group), label = Name)) +
+	geom_text(size = 2, angle = 45) +
+	stat_ellipse() 
+
+library(maps)
+library(plotrix)
+
+map("county", "colorado", xlim = c(min.long, max.long), ylim = c(min.lat,max.lat))
+map("county", "colorado")
+map.axes()
+for(x in 1:nrow(phfo.merge)){
+	floating.pie(phfo.merge$long[x],phfo.merge$lat[x], #You can modify your loop to reflect this
+	c(phfo.merge$X1[x],phfo.merge$X2[x]),radius=phfo.merge$Group[x]/8,
+	col=c("red","blue") }
+
+
+
+
+#http://stackoverflow.com/questions/17723822/administrative-regions-map-of-a-country-with-ggmap-and-ggplot2
+library(mapproj)
+# https://github.com/hadley/ggplot2/wiki/plotting-polygon-shapefiles
+
+ggplot()+
+	geom_polygon(data = 
+
+
+
+
+
